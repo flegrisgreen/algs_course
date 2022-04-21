@@ -137,15 +137,21 @@ public class Deque<Item> implements Iterable<Item> {
         }
 
         public boolean hasNext() {
-            if (this.current.next == null) {
+            if (this.current == null) {
                 return false;
             }
             return true;
         }
 
         public Item next() {
-            if (this.current.next == null) {
+            if (this.current == null) {
                 throw new NoSuchElementException();
+            }
+
+            if (this.current.next == null) {
+                Item item = this.current.item;
+                this.current = null;
+                return item;
             }
             Item item = this.current.item;
             this.current = this.current.next;
@@ -183,9 +189,6 @@ public class Deque<Item> implements Iterable<Item> {
         while (namesIterator.hasNext()) {
             StdOut.println("Name: " + namesIterator.next());
         }
-        if (!namesIterator.hasNext()) {
-            StdOut.println("Name: " + namesIterator.next());
-        }
 
         StdOut.println("Remove first: " + names.removeFirst());
         StdOut.println("Remove last: " + names.removeLast());
@@ -196,9 +199,6 @@ public class Deque<Item> implements Iterable<Item> {
 
         namesIterator = names.iterator();
         while (namesIterator.hasNext()) {
-            StdOut.println("Name: " + namesIterator.next());
-        }
-        if (!namesIterator.hasNext()) {
             StdOut.println("Name: " + namesIterator.next());
         }
     }
