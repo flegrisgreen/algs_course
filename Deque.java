@@ -46,10 +46,10 @@ public class Deque<Item> implements Iterable<Item> {
         }
 
         // Update global values
-        this.first = newFirst;
         if (this.isEmpty()) {
             this.last = newFirst;
         }
+        this.first = newFirst;
         this.size++;
     }
 
@@ -117,10 +117,10 @@ public class Deque<Item> implements Iterable<Item> {
         }
 
         public boolean hasNext() {
-            if (this.current.next != null) {
-                return true;
+            if (this.current.next == null) {
+                return false;
             }
-            return false;
+            return true;
         }
 
         public Item next() {
@@ -156,6 +156,9 @@ public class Deque<Item> implements Iterable<Item> {
         while (namesIterator.hasNext()) {
             StdOut.println("Name: " + namesIterator.next());
         }
+        if (!namesIterator.hasNext()) {
+            StdOut.println("Name: " + namesIterator.next());
+        }
 
         StdOut.println("Remove first: " + names.removeFirst());
         StdOut.println("Remove last: " + names.removeLast());
@@ -164,7 +167,11 @@ public class Deque<Item> implements Iterable<Item> {
         StdOut.println("isEmpty: " + names.isEmpty());
         StdOut.println("Size: " + names.size());
 
+        namesIterator = names.iterator();
         while (namesIterator.hasNext()) {
+            StdOut.println("Name: " + namesIterator.next());
+        }
+        if (!namesIterator.hasNext()) {
             StdOut.println("Name: " + namesIterator.next());
         }
     }
