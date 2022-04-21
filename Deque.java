@@ -7,6 +7,7 @@
 import edu.princeton.cs.algs4.StdOut;
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 public class Deque<Item> implements Iterable<Item> {
 
@@ -34,6 +35,10 @@ public class Deque<Item> implements Iterable<Item> {
     // add the item to the front
     public void addFirst(Item item) {
 
+        if (item == null) {
+            throw new IllegalArgumentException();
+        }
+
         // create new node and set values
         Node newFirst = new Node();
         newFirst.item = item;
@@ -55,6 +60,11 @@ public class Deque<Item> implements Iterable<Item> {
 
     // add the item to the back
     public void addLast(Item item) {
+
+        if (item == null) {
+            throw new IllegalArgumentException();
+        }
+
         // create new node and set values
         Node newLast = new Node();
         newLast.item = item;
@@ -76,6 +86,11 @@ public class Deque<Item> implements Iterable<Item> {
 
     // remove and return the item from the front
     public Item removeFirst() {
+
+        if (this.first.item == null) {
+            throw new NoSuchElementException();
+        }
+
         // get item
         Item item = this.first.item;
 
@@ -91,6 +106,11 @@ public class Deque<Item> implements Iterable<Item> {
 
     // remove and return the item from the back
     public Item removeLast() {
+
+        if (this.last.item == null) {
+            throw new NoSuchElementException();
+        }
+
         Item item = this.last.item;
 
         Node newLast = this.last.previous;
@@ -124,9 +144,16 @@ public class Deque<Item> implements Iterable<Item> {
         }
 
         public Item next() {
+            if (this.current.next == null) {
+                throw new NoSuchElementException();
+            }
             Item item = this.current.item;
             this.current = this.current.next;
             return item;
+        }
+
+        public void remove() {
+            throw new UnsupportedOperationException();
         }
     }
 
