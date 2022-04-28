@@ -93,22 +93,38 @@ public class RandomizedQueue<Item> implements Iterable<Item> {
 
     // return an independent iterator over items in random order
     public Iterator<Item> iterator() {
-        return new RandomizedQueueIterator();
+        return new RandomizedQueueIterator(this.randomQueue, this.size());
     }
 
     private class RandomizedQueueIterator implements Iterator<Item> {
 
+        int nonNullCount;
+        Item[] queue;
+        int capacity;
 
-        private RandomizedQueueIterator() {
-
+        private RandomizedQueueIterator(Item[] queue, int size) {
+            this.queue = queue;
+            this.nonNullCount = size;
+            this.capacity = queue.length;
         }
 
         public boolean hasNext() {
+            if (this.nonNullCount > 0) {
+                return true;
+            }
             return false;
         }
 
         public Item next() {
-            return null;
+            Item item = null;
+            while (item == null) {
+                int popPosition = StdRandom.uniform(this.capacity);
+                item = this.queue[popPosition];
+                this.queue[popPosition] = null;
+            }
+
+            this.nonNullCount--;
+            return item;
         }
 
         public void remove() {
@@ -118,11 +134,11 @@ public class RandomizedQueue<Item> implements Iterable<Item> {
 
     private void resize(int newCapacity) {
         Item[] copy = (Item[]) new Object[newCapacity];
-        // Todo: when this sizes down copy and this.randomQueue are not the same size and do not map.
-        // Todo: Create different counters for each array
+        int j = 0;
         for (int i = 0; i < this.queueCapacity; i++) {
             if (this.randomQueue[i] != null) {
-                copy[i] = this.randomQueue[i];
+                copy[j] = this.randomQueue[i];
+                j++;
             }
         }
         this.randomQueue = copy;
@@ -157,10 +173,20 @@ public class RandomizedQueue<Item> implements Iterable<Item> {
         StdOut.println("isEmpty: " + RQ.isEmpty());
         StdOut.println("Size: " + RQ.size());
 
-        // Iterator<String> namesIterator = names.iterator();
-        // while (namesIterator.hasNext()) {
-        //     StdOut.println("Name: " + namesIterator.next());
-        // }
+        Iterator<String> namesIterator = RQ.iterator();
+        while (namesIterator.hasNext()) {
+            StdOut.println("Name: " + namesIterator.next());
+        }
+
+        RQ.enqueue("Jimmy");
+        RQ.enqueue("Tim");
+        RQ.enqueue("Bob1");
+        RQ.enqueue("Bob2");
+        RQ.enqueue("Bob3");
+        RQ.enqueue("Bob4");
+        StdOut.println("Six names added");
+        StdOut.println("isEmpty: " + RQ.isEmpty());
+        StdOut.println("Size: " + RQ.size());
 
         StdOut.println("Sample name: " + RQ.sample());
         StdOut.println("Sample name: " + RQ.sample());
