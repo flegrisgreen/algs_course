@@ -116,6 +116,9 @@ public class RandomizedQueue<Item> implements Iterable<Item> {
         }
 
         public Item next() {
+            if (this.nonNullCount < 1) {
+                throw new NoSuchElementException();
+            }
             Item item = null;
             while (item == null) {
                 int popPosition = StdRandom.uniform(this.capacity);
