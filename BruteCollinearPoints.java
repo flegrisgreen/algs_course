@@ -111,7 +111,7 @@ public class BruteCollinearPoints {
 
         BruteCollinearPoints segmentFinder = new BruteCollinearPoints(points);
         StdOut.println(segmentFinder.numberOfSegments());
-        for (int j = 0; j < segmentFinder.segments().length; j++) {
+        for (int j = 0; j < segmentFinder.numberOfSegments(); j++) {
             StdOut.println(segmentFinder.segments()[j].toString());
         }
     }
