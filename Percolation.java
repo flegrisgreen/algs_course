@@ -9,6 +9,8 @@ public class Percolation {
     private int numOpen = 0;
     private final WeightedQuickUnionUF quf;
 
+    // Use a 2D array?
+
     public Percolation(int n) {
         rowLength = n;
         gridSize = n * n;
