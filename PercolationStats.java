@@ -11,8 +11,18 @@ import edu.princeton.cs.algs4.StdStats;
 public class PercolationStats {
 
     private final double[] finalResults;
+    private final double conf = 1.96;
 
     public PercolationStats(int n, int trials) {
+
+        if (n < 1) {
+            throw new IllegalArgumentException("n must be larger than 0");
+        }
+
+        if (trials < 1) {
+            throw new IllegalArgumentException("t must be larger than 0");
+        }
+
         double size = n * n;
         double[] results = new double[trials];
 
@@ -41,26 +51,20 @@ public class PercolationStats {
     }
 
     public double confidenceLo() {
-        double loConf = (this.mean() - ((1.96 * this.stddev()) / Math.sqrt(finalResults.length)));
+        double loConf = (this.mean() - ((this.conf * this.stddev()) / Math.sqrt(
+                finalResults.length)));
         return loConf;
     }
 
     public double confidenceHi() {
-        double hiConf = (this.mean() + ((1.96 * this.stddev()) / Math.sqrt(finalResults.length)));
+        double hiConf = (this.mean() + ((this.conf * this.stddev()) / Math.sqrt(
+                finalResults.length)));
         return hiConf;
     }
 
     public static void main(String[] args) {
         int n = Integer.parseInt(args[0]);
         int t = Integer.parseInt(args[1]);
-
-        if (n <= 0) {
-            throw new IllegalArgumentException("n must be larger than 0");
-        }
-
-        if (t <= 0) {
-            throw new IllegalArgumentException("t must be larger than 0");
-        }
 
         PercolationStats percStats = new PercolationStats(n, t);
         StdOut.println("mean                    = " + percStats.mean());
