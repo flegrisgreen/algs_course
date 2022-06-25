@@ -68,40 +68,32 @@ public class Percolation {
         // Check for adjacent open rows
         // above
         if (row != 0) {
-            if (row == 1 && grid[row - 1][col]) {
-                quf.union(entry, entry - rowLength);
-                this.updateTop(col);
-                this.updatePercolating();
-            }
-            else if (grid[row - 1][col]) {
+            if (grid[row - 1][col]) {
                 quf.union(entry, entry - rowLength);
                 this.updatePercolating();
             }
         }
-        else {
-            if (grid[row + 1][col]) {
+        else { // Top row
+            if (row != (rowLength - 1)) {
                 this.updateTop(col);
                 this.updatePercolating();
             }
+            else percolating = true; // Only triggered when n = 1;
         }
 
         // below
         if (row != (rowLength - 1)) {
-            if (row == (rowLength - 2) && grid[row + 1][col]) {
-                quf.union(entry, entry + rowLength);
-                this.updateBottom(col);
-                this.updatePercolating();
-            }
-            else if (grid[row + 1][col]) {
+            if (grid[row + 1][col]) {
                 quf.union(entry, entry + rowLength);
                 this.updatePercolating();
             }
         }
-        else {
-            if (grid[row - 1][col]) {
+        else { // Bottom row
+            if (row != 0) {
                 this.updateBottom(col);
                 this.updatePercolating();
             }
+            else percolating = true; // Only triggered when n = 1;
         }
     }
 
@@ -130,12 +122,12 @@ public class Percolation {
         int[] mappedVals = this.getMappedVals(row, col);
         int entry = mappedVals[0];
 
-        if (row == 1 && grid[row][col]) {
+        if (row == 1 && grid[row - 1][col - 1]) {
             return true;
         }
-
+        int entrySetVal = quf.find(entry);
         for (int i = 0; i < openTop; i++) {
-            if (quf.find(this.openTopRow[i] - 1) == quf.find(entry)) {
+            if (quf.find(this.openTopRow[i] - 1) == entrySetVal) {
                 return true;
             }
         }
@@ -161,8 +153,6 @@ public class Percolation {
             return;
         }
 
-        // Only check open top and bottom site that have adjacent sites open -> implement in open()
-
         // Update and check set count < n^2 -(n-1) (this only requires one quf call)
         if (openBottom > 0 && openTop > 0 && checkSets) {
             if (quf.count() > (gridSize - rowLength + 1)) {
@@ -179,18 +169,96 @@ public class Percolation {
     }
 
     private void updateTop(int col) {
-        openTopRow[openTop] = col + 1; // Non-mapped col value
-        openTop++;
+        if (col == 0) {
+            if (!grid[0][col + 1]) {
+                openTopRow[openTop] = col + 1; // Non-mapped col value
+                openTop++;
+            }
+        }
+        else if (col == rowLength - 1) {
+            if (!grid[0][col - 1]) {
+                openTopRow[openTop] = col + 1; // Non-mapped col value
+                openTop++;
+            }
+        }
+        else if (!grid[0][col - 1] && !grid[0][col + 1]) { // Only need to check unique sets
+            openTopRow[openTop] = col + 1; // Non-mapped col value
+            openTop++;
+        }
+        else if (grid[0][col - 1] && grid[0][col + 1]) {
+            this.rebuildOpenTop(col); // Non-mapped col value
+        }
+    }
+
+
+    private void rebuildOpenTop(int col) {
+        int setVal = quf.find(this.getMappedVals(1, col)[0]);
+        boolean foundOne = false;
+        boolean readyPopped = false;
+        for (int i = 0; i < openTop; i++) {
+            if (readyPopped) {
+                openTopRow[i - 1] = openTopRow[i];
+            }
+
+            if (quf.find(this.getMappedVals(1, openTopRow[i])[0]) == setVal) {
+                if (foundOne) {
+                    openTopRow[i] = 0;
+                    readyPopped = true;
+                }
+                else foundOne = true;
+            }
+        }
+        openTop--;
+    }
+
+    private void rebuildOpenBottom(int col) {
+        int setVal = quf.find(this.getMappedVals(rowLength - 1, col)[0]);
+        boolean foundOne = false;
+        boolean readyPopped = false;
+        for (int i = 0; i < openBottom; i++) {
+            if (readyPopped) {
+                openBottomRow[i - 1] = openBottomRow[i];
+            }
+
+            if (quf.find(this.getMappedVals(1, openBottomRow[i])[0]) == setVal) {
+                if (foundOne) {
+                    openBottomRow[i] = 0;
+                    readyPopped = true;
+                }
+                else foundOne = true;
+            }
+        }
+        openBottom--;
     }
 
     private void updateBottom(int col) {
-        openBottomRow[openBottom] = col + 1; // Non-mapped col value
-        openBottom++;
+        int bottomRow = rowLength - 1;
+        if (col == 0) {
+            if (!grid[bottomRow][col + 1]) {
+                openBottomRow[openBottom] = col + 1; // Non-mapped col value
+                openBottom++;
+            }
+        }
+        else if (col == bottomRow) {
+            if (!grid[bottomRow][col - 1]) {
+                openBottomRow[openBottom] = col + 1; // Non-mapped col value
+                openBottom++;
+            }
+        }
+        else if (!grid[bottomRow][col - 1] && !grid[bottomRow][col
+                + 1]) { // Only need to check unique sets
+            openBottomRow[openBottom] = col + 1; // Non-mapped col value
+            openBottom++;
+        }
+        else if (grid[bottomRow][col - 1] && grid[bottomRow][col
+                + 1]) { // Only need to check unique sets
+            this.rebuildOpenBottom(col);  // Non-mapped col value
+        }
     }
 
     public static void main(String[] args) {
         // Only used during development
-        Percolation perc = new Percolation(5);
+        Percolation perc = new Percolation(10);
         StdOut.println("isOpen: " + perc.isOpen(1, 1));
         StdOut.println("isFull: " + perc.isFull(1, 1));
         perc.open(1, 2);
@@ -205,7 +273,7 @@ public class Percolation {
             perc.open(2, 3);
             perc.open(2, 4);
             perc.open(4, 3);
-            StdOut.println("isOpen: " + i + perc.isOpen(i, 1));
+            StdOut.println("isOpen: " + perc.isOpen(i, 1));
             StdOut.println("isFull: " + perc.isFull(i, 1));
             StdOut.println("isOpen: " + perc.isOpen(i, 2));
             StdOut.println("isFull: " + perc.isFull(i, 2));

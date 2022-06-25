@@ -7,6 +7,7 @@
 import edu.princeton.cs.algs4.StdOut;
 import edu.princeton.cs.algs4.StdRandom;
 import edu.princeton.cs.algs4.StdStats;
+import edu.princeton.cs.algs4.Stopwatch;
 
 public class PercolationStats {
 
@@ -68,12 +69,12 @@ public class PercolationStats {
         }
         int n = Integer.parseInt(args[0]);
         int t = Integer.parseInt(args[1]);
-        // Stopwatch time = new Stopwatch();
+        Stopwatch time = new Stopwatch();
         PercolationStats percStats = new PercolationStats(n, t);
         StdOut.println("mean                    = " + percStats.mean());
         StdOut.println("stddev                  = " + percStats.stddev());
         StdOut.println("95% confidence interval = [" + percStats.confidenceLo() + ", "
                                + percStats.confidenceHi() + "]");
-        // StdOut.println(time.elapsedTime());
+        StdOut.println(time.elapsedTime());
     }
 }
