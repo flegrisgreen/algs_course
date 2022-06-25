@@ -10,8 +10,8 @@ import edu.princeton.cs.algs4.StdStats;
 
 public class PercolationStats {
 
+    private static final double CONF = 1.96;
     private final double[] finalResults;
-    private final double conf = 1.96;
 
     public PercolationStats(int n, int trials) {
 
@@ -51,25 +51,29 @@ public class PercolationStats {
     }
 
     public double confidenceLo() {
-        double loConf = (this.mean() - ((this.conf * this.stddev()) / Math.sqrt(
+        double loConf = (this.mean() - ((PercolationStats.CONF * this.stddev()) / Math.sqrt(
                 finalResults.length)));
         return loConf;
     }
 
     public double confidenceHi() {
-        double hiConf = (this.mean() + ((this.conf * this.stddev()) / Math.sqrt(
+        double hiConf = (this.mean() + ((PercolationStats.CONF * this.stddev()) / Math.sqrt(
                 finalResults.length)));
         return hiConf;
     }
 
     public static void main(String[] args) {
+        if (args.length < 2) {
+            throw new IllegalArgumentException("Two arguments required: n and t");
+        }
         int n = Integer.parseInt(args[0]);
         int t = Integer.parseInt(args[1]);
-
+        // Stopwatch time = new Stopwatch();
         PercolationStats percStats = new PercolationStats(n, t);
         StdOut.println("mean                    = " + percStats.mean());
         StdOut.println("stddev                  = " + percStats.stddev());
         StdOut.println("95% confidence interval = [" + percStats.confidenceLo() + ", "
                                + percStats.confidenceHi() + "]");
+        // StdOut.println(time.elapsedTime());
     }
 }

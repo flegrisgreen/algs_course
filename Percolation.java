@@ -12,6 +12,8 @@ public class Percolation {
     private int openTop = 0;
     private int[] openBottomRow;
     private int openBottom = 0;
+    private boolean percolating = false;
+    private boolean checkSets = true;
 
     // Use a 2D array?
 
@@ -52,36 +54,54 @@ public class Percolation {
         if (col != 0) {
             if (grid[row][col - 1]) {
                 quf.union(entry, entry - 1);
+                this.updatePercolating();
             }
         }
         // right
         if (col != (rowLength - 1)) {
             if (grid[row][col + 1]) {
                 quf.union(entry, entry + 1);
+                this.updatePercolating();
             }
         }
 
         // Check for adjacent open rows
         // above
         if (row != 0) {
-            if (grid[row - 1][col]) {
+            if (row == 1 && grid[row - 1][col]) {
                 quf.union(entry, entry - rowLength);
+                this.updateTop(col);
+                this.updatePercolating();
+            }
+            else if (grid[row - 1][col]) {
+                quf.union(entry, entry - rowLength);
+                this.updatePercolating();
             }
         }
         else {
-            openTopRow[openTop] = col + 1; // Non-mapped col value
-            openTop++;
+            if (grid[row + 1][col]) {
+                this.updateTop(col);
+                this.updatePercolating();
+            }
         }
 
         // below
         if (row != (rowLength - 1)) {
-            if (grid[row + 1][col]) {
+            if (row == (rowLength - 2) && grid[row + 1][col]) {
                 quf.union(entry, entry + rowLength);
+                this.updateBottom(col);
+                this.updatePercolating();
+            }
+            else if (grid[row + 1][col]) {
+                quf.union(entry, entry + rowLength);
+                this.updatePercolating();
             }
         }
         else {
-            openBottomRow[openBottom] = col + 1; // Non-mapped col value
-            openBottom++;
+            if (grid[row - 1][col]) {
+                this.updateBottom(col);
+                this.updatePercolating();
+            }
         }
     }
 
@@ -91,17 +111,14 @@ public class Percolation {
             throw new IllegalArgumentException("row value out of bound in open()");
         }
         if (col < 1 || col > rowLength) {
-            throw new IllegalArgumentException("row value out of bound in open()");
+            throw new IllegalArgumentException("col value out of bound in open()");
         }
 
         int[] mappedVals = this.getMappedVals(row, col);
         row = mappedVals[1];
         col = mappedVals[2];
 
-        if (grid[row][col]) {
-            return true;
-        }
-        return false;
+        return grid[row][col];
     }
 
     public boolean isFull(int row, int col) {
@@ -113,10 +130,14 @@ public class Percolation {
         int[] mappedVals = this.getMappedVals(row, col);
         int entry = mappedVals[0];
 
-        // only initialised array indices can be 0 since openTopRow takes col + 1 in this.open()
-        for (int i = 0; this.openTopRow[i] != 0; i++) {
-            if (quf.find(i) == quf.find(entry))
+        if (row == 1 && grid[row][col]) {
+            return true;
+        }
+
+        for (int i = 0; i < openTop; i++) {
+            if (quf.find(this.openTopRow[i] - 1) == quf.find(entry)) {
                 return true;
+            }
         }
         return false;
     }
@@ -126,12 +147,7 @@ public class Percolation {
     }
 
     public boolean percolates() {
-        for (int j = 0; this.openBottomRow[j] != 0; j++) {
-            if (this.isFull(rowLength, j + 1)) {
-                return true;
-            }
-        }
-        return false;
+        return percolating;
     }
 
     private int[] getMappedVals(int row, int col) {
@@ -140,14 +156,56 @@ public class Percolation {
         return new int[] { (rowLength * row + col), row, col };
     }
 
+    private void updatePercolating() {
+        if (this.numberOfOpenSites() < rowLength) {
+            return;
+        }
+
+        // Only check open top and bottom site that have adjacent sites open -> implement in open()
+
+        // Update and check set count < n^2 -(n-1) (this only requires one quf call)
+        if (openBottom > 0 && openTop > 0 && checkSets) {
+            if (quf.count() > (gridSize - rowLength + 1)) {
+                return;
+            }
+            else checkSets = false;
+        }
+
+        for (int i = 0; i < openBottom; i++) {
+            if (this.isFull(rowLength, openBottomRow[i])) {
+                percolating = true;
+            }
+        }
+    }
+
+    private void updateTop(int col) {
+        openTopRow[openTop] = col + 1; // Non-mapped col value
+        openTop++;
+    }
+
+    private void updateBottom(int col) {
+        openBottomRow[openBottom] = col + 1; // Non-mapped col value
+        openBottom++;
+    }
+
     public static void main(String[] args) {
         // Only used during development
-        Percolation perc = new Percolation(10);
+        Percolation perc = new Percolation(5);
+        StdOut.println("isOpen: " + perc.isOpen(1, 1));
+        StdOut.println("isFull: " + perc.isFull(1, 1));
         perc.open(1, 2);
-        perc.open(10, 2);
+        boolean toggle = false;
+        int start;
         for (int i = 1; i <= perc.rowLength; i++) {
-            perc.open(i, 1);
-            StdOut.println("isOpen: " + perc.isOpen(i, 1));
+            start = toggle ? 2 : 1;
+            toggle = !toggle;
+            for (int j = start; j <= perc.rowLength; j = j + 2) {
+                perc.open(i, j);
+            }
+            perc.open(2, 3);
+            perc.open(2, 4);
+            perc.open(4, 3);
+            StdOut.println("isOpen: " + i + perc.isOpen(i, 1));
             StdOut.println("isFull: " + perc.isFull(i, 1));
             StdOut.println("isOpen: " + perc.isOpen(i, 2));
             StdOut.println("isFull: " + perc.isFull(i, 2));
@@ -159,8 +217,14 @@ public class Percolation {
                 StdOut.print("\n");
             }
             StdOut.println("");
+            StdOut.println(perc.quf.count());
         }
-        StdOut.println(perc.openTop);
-        StdOut.println(perc.openBottom);
+        for (int k = 0; k < perc.rowLength; k++) {
+            StdOut.print(perc.openTopRow[k] + " ");
+        }
+        StdOut.print("\n");
+        for (int k = 0; k < perc.rowLength; k++) {
+            StdOut.print(perc.openBottomRow[k] + " ");
+        }
     }
 }
