@@ -27,8 +27,8 @@ public class Percolation {
         gridSize = n * n;
         grid = new boolean[n][n];
         quf = new WeightedQuickUnionUF(gridSize);
-        openTopRow = new int[n];
-        openBottomRow = new int[n];
+        openTopRow = new int[n]; // this can be half this size
+        openBottomRow = new int[n]; // this can be half this size
     }
 
     public void open(int row, int col) {
@@ -37,6 +37,7 @@ public class Percolation {
             return;
         }
 
+        boolean shouldUpdate = false;
         int[] mappedVals = this.getMappedVals(row, col);
         int entry = mappedVals[0];
         row = mappedVals[1];
@@ -49,51 +50,59 @@ public class Percolation {
         grid[row][col] = true;
         numOpen++;
 
-        // Check for adjacent open columns
-        // left
-        if (col != 0) {
-            if (grid[row][col - 1]) {
-                quf.union(entry, entry - 1);
-                this.updatePercolating();
+        if (row == 0) {
+            if (row == rowLength - 1) { // n = 1
+                percolating = true;
+                return;
             }
-        }
-        // right
-        if (col != (rowLength - 1)) {
-            if (grid[row][col + 1]) {
-                quf.union(entry, entry + 1);
-                this.updatePercolating();
-            }
-        }
-
-        // Check for adjacent open rows
-        // above
-        if (row != 0) {
-            if (grid[row - 1][col]) {
-                quf.union(entry, entry - rowLength);
-                this.updatePercolating();
-            }
-        }
-        else { // Top row
-            if (row != (rowLength - 1)) {
-                this.updateTop(col);
-                this.updatePercolating();
-            }
-            else percolating = true; // Only triggered when n = 1;
-        }
-
-        // below
-        if (row != (rowLength - 1)) {
             if (grid[row + 1][col]) {
                 quf.union(entry, entry + rowLength);
-                this.updatePercolating();
+                shouldUpdate = true;
+            }
+            this.updateTop(col);
+        }
+        else if (row == rowLength - 1) {
+            if (grid[row - 1][col]) {
+                quf.union(entry, entry - rowLength);
+                shouldUpdate = true;
+            }
+            this.updateBottom(col);
+        }
+        else {
+            if (grid[row - 1][col]) {
+                quf.union(entry, entry - rowLength);
+                shouldUpdate = true;
+            }
+            if (grid[row + 1][col]) {
+                quf.union(entry, entry + rowLength);
+                shouldUpdate = true;
             }
         }
-        else { // Bottom row
-            if (row != 0) {
-                this.updateBottom(col);
-                this.updatePercolating();
+
+        if (col == 0) {
+            if (grid[row][col + 1]) {
+                quf.union(entry, entry + 1);
+                shouldUpdate = true;
             }
-            else percolating = true; // Only triggered when n = 1;
+        }
+        else if (col == rowLength - 1) {
+            if (grid[row][col - 1]) {
+                quf.union(entry, entry - 1);
+                shouldUpdate = true;
+            }
+        }
+        else {
+            if (grid[row][col - 1]) {
+                quf.union(entry, entry - 1);
+                shouldUpdate = true;
+            }
+            if (grid[row][col + 1]) {
+                quf.union(entry, entry + 1);
+                shouldUpdate = true;
+            }
+        }
+        if (shouldUpdate) {
+            this.updatePercolating();
         }
     }
 
@@ -107,10 +116,8 @@ public class Percolation {
         }
 
         int[] mappedVals = this.getMappedVals(row, col);
-        row = mappedVals[1];
-        col = mappedVals[2];
 
-        return grid[row][col];
+        return grid[mappedVals[1]][mappedVals[2]];
     }
 
     public boolean isFull(int row, int col) {
@@ -119,13 +126,10 @@ public class Percolation {
             return false;
         }
 
-        int[] mappedVals = this.getMappedVals(row, col);
-        int entry = mappedVals[0];
-
         if (row == 1 && grid[row - 1][col - 1]) {
             return true;
         }
-        int entrySetVal = quf.find(entry);
+        int entrySetVal = quf.find(this.getMappedVals(row, col)[0]);
         for (int i = 0; i < openTop; i++) {
             if (quf.find(this.openTopRow[i] - 1) == entrySetVal) {
                 return true;
@@ -149,13 +153,17 @@ public class Percolation {
     }
 
     private void updatePercolating() {
-        if (this.numberOfOpenSites() < rowLength) {
+        if (numOpen < rowLength) {
+            return;
+        }
+
+        if (!(openTop > 0) || !(openBottom > 0)) {
             return;
         }
 
         // Update and check set count < n^2 -(n-1) (this only requires one quf call)
-        if (openBottom > 0 && openTop > 0 && checkSets) {
-            if (quf.count() > (gridSize - rowLength + 1)) {
+        if (checkSets) {
+            if (quf.count() > ((gridSize - rowLength) + 1)) {
                 return;
             }
             else checkSets = false;
@@ -193,42 +201,19 @@ public class Percolation {
 
     private void rebuildOpenTop(int col) {
         int setVal = quf.find(this.getMappedVals(1, col)[0]);
-        boolean foundOne = false;
-        boolean readyPopped = false;
+        boolean readyPopped = false; // Pop the first one and shift entries left
         for (int i = 0; i < openTop; i++) {
             if (readyPopped) {
                 openTopRow[i - 1] = openTopRow[i];
+                continue;
             }
 
             if (quf.find(this.getMappedVals(1, openTopRow[i])[0]) == setVal) {
-                if (foundOne) {
-                    openTopRow[i] = 0;
-                    readyPopped = true;
-                }
-                else foundOne = true;
+                openTopRow[i] = 0;
+                readyPopped = true;
             }
         }
         openTop--;
-    }
-
-    private void rebuildOpenBottom(int col) {
-        int setVal = quf.find(this.getMappedVals(rowLength - 1, col)[0]);
-        boolean foundOne = false;
-        boolean readyPopped = false;
-        for (int i = 0; i < openBottom; i++) {
-            if (readyPopped) {
-                openBottomRow[i - 1] = openBottomRow[i];
-            }
-
-            if (quf.find(this.getMappedVals(1, openBottomRow[i])[0]) == setVal) {
-                if (foundOne) {
-                    openBottomRow[i] = 0;
-                    readyPopped = true;
-                }
-                else foundOne = true;
-            }
-        }
-        openBottom--;
     }
 
     private void updateBottom(int col) {
@@ -254,6 +239,23 @@ public class Percolation {
                 + 1]) { // Only need to check unique sets
             this.rebuildOpenBottom(col);  // Non-mapped col value
         }
+    }
+
+    private void rebuildOpenBottom(int col) {
+        int setVal = quf.find(this.getMappedVals(rowLength - 1, col)[0]);
+        boolean readyPopped = false; // Pop the first one and shift entries left
+        for (int i = 0; i < openBottom; i++) {
+            if (readyPopped) {
+                openBottomRow[i - 1] = openBottomRow[i];
+                continue;
+            }
+
+            if (quf.find(this.getMappedVals(1, openBottomRow[i])[0]) == setVal) {
+                openBottomRow[i] = 0;
+                readyPopped = true;
+            }
+        }
+        openBottom--;
     }
 
     public static void main(String[] args) {

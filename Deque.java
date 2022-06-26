@@ -42,18 +42,17 @@ public class Deque<Item> implements Iterable<Item> {
         // create new node and set values
         Node newFirst = new Node();
         newFirst.item = item;
-        newFirst.previous = null;
-        newFirst.next = this.first;
-
-        // Update former first node
-        if (this.first != null) {
+        if (this.isEmpty()) {
+            newFirst.next = null;
+            newFirst.previous = null;
+            this.last = newFirst;
+        }
+        else {
+            newFirst.previous = null;
+            newFirst.next = this.first;
             this.first.previous = newFirst;
         }
 
-        // Update global values
-        if (this.isEmpty()) {
-            this.last = newFirst;
-        }
         this.first = newFirst;
         this.size++;
     }
@@ -68,36 +67,43 @@ public class Deque<Item> implements Iterable<Item> {
         // create new node and set values
         Node newLast = new Node();
         newLast.item = item;
-        newLast.previous = this.last;
-        newLast.next = null;
-
-        // Update former last node
-        if (this.last != null) {
+        if (this.isEmpty()) {
+            newLast.previous = null;
+            newLast.next = null;
+            this.first = newLast;
+        }
+        else {
+            newLast.previous = this.last;
+            newLast.next = null;
             this.last.next = newLast;
         }
 
         // Update global values
         this.last = newLast;
-        if (this.isEmpty()) {
-            this.first = newLast;
-        }
         this.size++;
     }
 
     // remove and return the item from the front
     public Item removeFirst() {
 
-        if (this.first.item == null) {
+        if (this.isEmpty()) {
             throw new NoSuchElementException();
         }
 
         // get item
         Item item = this.first.item;
 
-        // set new first
-        Node newFirst = this.first.next;
-        newFirst.previous = null;
-        this.first = newFirst;
+        if (size == 1) {
+            this.first = null;
+            this.last = null;
+        }
+        else {
+            Node newFirst = this.first.next;
+            if (newFirst.previous != null) { // last item in deque has previous = null
+                newFirst.previous = null;
+            }
+            this.first = newFirst;
+        }
 
         this.size--;
 
@@ -107,15 +113,23 @@ public class Deque<Item> implements Iterable<Item> {
     // remove and return the item from the back
     public Item removeLast() {
 
-        if (this.last.item == null) {
+        if (this.isEmpty()) {
             throw new NoSuchElementException();
         }
 
         Item item = this.last.item;
 
-        Node newLast = this.last.previous;
-        newLast.next = null;
-        this.last = newLast;
+        if (size == 1) {
+            this.first = null;
+            this.last = null;
+        }
+        else {
+            Node newLast = this.last.previous;
+            if (newLast.next != null) { // last item in deque has previous = null
+                newLast.next = null;
+            }
+            this.last = newLast;
+        }
 
         this.size--;
 

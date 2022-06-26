@@ -5,6 +5,7 @@
  **************************************************************************** */
 
 import edu.princeton.cs.algs4.StdOut;
+import edu.princeton.cs.algs4.Stopwatch;
 
 import java.util.Arrays;
 
@@ -19,44 +20,68 @@ public class FastCollinearPoints {
             throw new IllegalArgumentException();
         }
 
-        if (points.length < 4) {
-            throw new IllegalArgumentException();
+        // Check for null points
+        for (int i = 0; i < points.length; i++) {
+            if (points[i] == null) {
+                throw new IllegalArgumentException("Null points not allowed");
+            }
         }
 
+        // Check for equal points
         Point[] sortedPoints = points.clone();
+        Arrays.sort(sortedPoints);
+        for (int i = 0; i < points.length - 1; i++) {
+            if (sortedPoints[i].compareTo(sortedPoints[i + 1]) == 0) {
+                throw new IllegalArgumentException("Duplicate points not allowed");
+            }
+        }
+
+        if (points.length < 4) {
+            return;
+        }
+
         for (int i = 0; i < points.length; i++) {
             Point p = points[i];
-            Arrays.sort(sortedPoints, p.slopeOrder());
+            if (i != 0) Arrays.sort(sortedPoints, p.slopeOrder());
             int startPointer = 0;
-            int endPointer = 1;
+            int endPointer = 0;
             double slope = p.slopeTo(sortedPoints[startPointer]);
             for (int j = 1; j < sortedPoints.length; j++) {
-                if (p.slopeTo(sortedPoints[j]) == slope) {
+                if (Double.compare(p.slopeTo(sortedPoints[j]), slope) == 0) {
                     endPointer++;
+                    if (j == sortedPoints.length - 1) {
+                        this.addSegment(sortedPoints, startPointer, endPointer,
+                                        p); // add segment in last iteration
+                    }
                 }
                 else {
-                    if (this.numOfSegments == this.lineSegments.length) {
-                        doubleSegementsArray();
-                    }
-                    if (endPointer - startPointer > 1) {
-
-                        Point[] segmentPoints = slicedArray(sortedPoints, startPointer, endPointer,
-                                                            p);
-                        Arrays.sort(segmentPoints);
-                        LineSegment segment = new LineSegment(segmentPoints[0],
-                                                              segmentPoints[segmentPoints.length
-                                                                      - 1]);
-                        if (!isDuplicate(segment)) {
-                            this.lineSegments[this.numOfSegments] = segment;
-                            numOfSegments++;
-                        }
-                    }
-                    startPointer = j - 1;
+                    this.addSegment(sortedPoints, startPointer, endPointer, p);
+                    startPointer = j;
                     slope = p.slopeTo(sortedPoints[startPointer]);
                     endPointer = j;
-
                 }
 
+            }
+        }
+    }
+
+    private void addSegment(Point[] sortedPoints, int startPointer, int endPointer, Point p) {
+
+        if (this.numOfSegments == this.lineSegments.length) {
+            doubleSegementsArray();
+        }
+
+        if (endPointer - startPointer > 1) {
+
+            Point[] segmentPoints = slicedArray(sortedPoints, startPointer, endPointer,
+                                                p);
+            Arrays.sort(segmentPoints);
+            LineSegment segment = new LineSegment(segmentPoints[0],
+                                                  segmentPoints[segmentPoints.length
+                                                          - 1]);
+            if (!isDuplicate(segment)) {
+                this.lineSegments[this.numOfSegments] = segment;
+                numOfSegments++;
             }
         }
     }
@@ -94,26 +119,34 @@ public class FastCollinearPoints {
     }
 
     public LineSegment[] segments() {
-        return this.lineSegments.clone();
+        LineSegment[] copy = new LineSegment[numberOfSegments()];
+        for (int i = 0; i < numberOfSegments(); i++) {
+            copy[i] = this.lineSegments[i];
+        }
+        return copy;
     }
 
     public static void main(String[] args) {
-        Point a = new Point(2, 2);
-        Point b = new Point(3, 3);
-        Point c = new Point(4, 4);
-        Point d = new Point(5, 5);
-        Point e = new Point(4, 2);
-        Point f = new Point(2, 4);
-        Point g = new Point(1, 5);
-        Point h = new Point(2, 5);
-        Point i = new Point(1, 3);
 
-        Point[] points = new Point[] { a, b, c, d, e, f, g, h, i };
+        int xval = 20;
+        int yval = 20;
+        Point[] points = new Point[xval * yval];
 
-        FastCollinearPoints segmentFinder = new FastCollinearPoints(points);
-        StdOut.println(segmentFinder.numberOfSegments());
-        for (int j = 0; j < segmentFinder.numOfSegments; j++) {
-            StdOut.println(segmentFinder.segments()[j].toString());
+        int entry = 0;
+        for (int k = 0; k < xval; k++) {
+            for (int j = 0; j < yval; j++) {
+                points[entry] = new Point(k, j);
+                // StdOut.print(points[entry] + " ");
+                entry++;
+            }
+            // StdOut.println("\n");
         }
+        Stopwatch time = new Stopwatch();
+        FastCollinearPoints segmentFinder = new FastCollinearPoints(points);
+        StdOut.println(time.elapsedTime());
+        StdOut.println(segmentFinder.numberOfSegments());
+        // for (int j = 0; j < segmentFinder.numOfSegments; j++) {
+        //     StdOut.println(segmentFinder.segments()[j].toString());
+        // }
     }
 }
