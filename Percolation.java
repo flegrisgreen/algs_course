@@ -15,7 +15,9 @@ public class Percolation {
     private boolean percolating = false;
     private boolean checkSets = true;
 
-    // Use a 2D array?
+    //Todo:
+    // Try to take advantage of sparcity?
+    // Try to use recursive function when checking for percolation?
 
     public Percolation(int n) {
 
@@ -172,6 +174,7 @@ public class Percolation {
         for (int i = 0; i < openBottom; i++) {
             if (this.isFull(rowLength, openBottomRow[i])) {
                 percolating = true;
+                return;
             }
         }
     }
