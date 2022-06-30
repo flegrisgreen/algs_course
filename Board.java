@@ -14,6 +14,10 @@ public class Board {
 
     private final int[][] board;
     private final int boardSize;
+    private boolean manhattanScore = false;
+    private int manhattanCount = 0;
+    private boolean hammingScore = false;
+    private int hammingCount = 0;
 
     // create a board from an n-by-n array of tiles,
     // where tiles[row][col] = tile at (row, col)
@@ -49,8 +53,11 @@ public class Board {
 
     // number of tiles out of place
     public int hamming() {
+
+        if (hammingScore) {
+            return hammingCount;
+        }
         int goalVal = 1;
-        int hammingCount = 0;
         for (int i = 0; i < this.boardSize; i++) {
             for (int j = 0; j < this.boardSize; j++) {
                 if (board[i][j] == 0) {
@@ -63,12 +70,17 @@ public class Board {
                 goalVal++;
             }
         }
+        hammingScore = true;
         return hammingCount;
     }
 
     // sum of Manhattan distances between tiles and goal
     public int manhattan() {
-        int manhattanCount = 0;
+
+        if (manhattanScore) {
+            return manhattanCount;
+        }
+
         for (int i = 0; i < this.boardSize; i++) {
             for (int j = 0; j < this.boardSize; j++) {
                 int val = board[i][j];
@@ -81,6 +93,7 @@ public class Board {
                 manhattanCount = manhattanCount + Math.abs(row - i) + Math.abs(col - j);
             }
         }
+        manhattanScore = true;
         return manhattanCount;
     }
 
@@ -92,6 +105,10 @@ public class Board {
     // does this board equal y?
     public boolean equals(Object y) {
         // Going to have to check strings against each other.
+        if (y == null) {
+            return false;
+        }
+
         if (this.dimension() != ((Board) y).dimension()) {
             return false;
         }
@@ -158,12 +175,23 @@ public class Board {
     // a board that is obtained by exchanging any pair of tiles
     public Board twin() {
         // Copy board
-        int[][] neighbour = new int[boardSize][boardSize];
+        int[][] twin = new int[boardSize][boardSize];
         for (int i = 0; i < boardSize; i++) {
             for (int j = 0; j < boardSize; j++) {
-                neighbour[i][j] = board[i][j];
+                twin[i][j] = board[i][j];
             }
         }
+
+        // This finds an unsolvable board and return the goal board
+        if (board[boardSize - 1][boardSize - 1] == 0) {
+            if (this.hamming() == 2) {
+                int[] nip = this.outOfPlace();
+                twin[nip[0]][nip[1]] = board[nip[2]][nip[3]];
+                twin[nip[2]][nip[3]] = board[nip[0]][nip[1]];
+                return new Board(twin);
+            }
+        }
+
         // Get random positions
         int a = StdRandom.uniform(boardSize);
         int b = StdRandom.uniform(boardSize);
@@ -174,10 +202,31 @@ public class Board {
             d = StdRandom.uniform(boardSize);
         }
         // Swap tiles
-        neighbour[a][b] = board[c][d];
-        neighbour[c][d] = board[a][b];
+        twin[a][b] = board[c][d];
+        twin[c][d] = board[a][b];
 
-        return new Board(neighbour);
+        return new Board(twin);
+    }
+
+    // This function is only intended to find two out-of-place values
+    private int[] outOfPlace() {
+        int goalVal = 1;
+        int insert = 0;
+        int[] outOfPlace = new int[4]; // [row,col,row,col]
+        for (int i = 0; i < boardSize; i++) {
+            for (int j = 0; j < boardSize; j++) {
+                if (board[i][j] != goalVal) {
+                    outOfPlace[insert] = i;
+                    outOfPlace[insert + 1] = j;
+                    insert = insert + 2;
+                }
+                if (insert > 3) {
+                    return outOfPlace;
+                }
+                goalVal++;
+            }
+        }
+        return outOfPlace;
     }
 
     private boolean checkBoard(int row, int col, int val) {
