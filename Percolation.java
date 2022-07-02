@@ -131,6 +131,7 @@ public class Percolation {
         if (row == 1 && grid[row - 1][col - 1]) {
             return true;
         }
+
         int entrySetVal = quf.find(this.getMappedVals(row, col)[0]);
         for (int i = 0; i < openTop; i++) {
             if (quf.find(this.openTopRow[i] - 1) == entrySetVal) {
@@ -180,6 +181,7 @@ public class Percolation {
     }
 
     private void updateTop(int col) {
+        // col is the mapped col val
         if (col == 0) {
             if (!grid[0][col + 1]) {
                 openTopRow[openTop] = col + 1; // Non-mapped col value
@@ -197,12 +199,14 @@ public class Percolation {
             openTop++;
         }
         else if (grid[0][col - 1] && grid[0][col + 1]) {
-            this.rebuildOpenTop(col); // Non-mapped col value
+            this.rebuildOpenTop(col); // Non-mapped col value of column to the left
         }
+        // else do nothing because set value is already in the array
     }
 
 
     private void rebuildOpenTop(int col) {
+        // col is the non-mapped col value of the column to the left
         int setVal = quf.find(this.getMappedVals(1, col)[0]);
         boolean readyPopped = false; // Pop the first one and shift entries left
         for (int i = 0; i < openTop; i++) {
@@ -220,6 +224,7 @@ public class Percolation {
     }
 
     private void updateBottom(int col) {
+        // col is the mapped col val
         int bottomRow = rowLength - 1;
         if (col == 0) {
             if (!grid[bottomRow][col + 1]) {
@@ -242,10 +247,12 @@ public class Percolation {
                 + 1]) { // Only need to check unique sets
             this.rebuildOpenBottom(col);  // Non-mapped col value
         }
+        // else do nothing because set value is already in the array
     }
 
     private void rebuildOpenBottom(int col) {
-        int setVal = quf.find(this.getMappedVals(rowLength - 1, col)[0]);
+        // col is the non-mapped col value of the column to the left
+        int setVal = quf.find(this.getMappedVals(rowLength, col)[0]);
         boolean readyPopped = false; // Pop the first one and shift entries left
         for (int i = 0; i < openBottom; i++) {
             if (readyPopped) {
