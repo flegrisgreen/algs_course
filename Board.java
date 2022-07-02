@@ -99,7 +99,19 @@ public class Board {
 
     // is this board the goal board?
     public boolean isGoal() {
-        return this.checkBoard(0, 0, 1);
+        int val = 1;
+        for (int i = 0; i < boardSize; i++) {
+            for (int j = 0; j < boardSize; j++) {
+                if (i == boardSize - 1 && j == boardSize - 1) {
+                    return true;
+                }
+                if (this.board[i][j] != val) {
+                    return false;
+                }
+                val++;
+            }
+        }
+        return true;
     }
 
     // does this board equal y?
@@ -124,7 +136,7 @@ public class Board {
         List<Board> list = new ArrayList<>();
 
         // Find 0
-        int[] zeroPos = this.findZero(0, 0); // zeroPos[0] = row
+        int[] zeroPos = this.findZero(); // zeroPos[0] = row
         int zRow = zeroPos[0];
         int zCol = zeroPos[1];
 
@@ -182,86 +194,36 @@ public class Board {
             }
         }
 
-        // This finds an unsolvable board and return the goal board
-        if (board[boardSize - 1][boardSize - 1] == 0) {
-            if (this.hamming() == 2) {
-                int[] nip = this.outOfPlace();
-                twin[nip[0]][nip[1]] = board[nip[2]][nip[3]];
-                twin[nip[2]][nip[3]] = board[nip[0]][nip[1]];
-                return new Board(twin);
-            }
-        }
-
-        // Get random positions
-        int a = StdRandom.uniform(boardSize);
-        int b = StdRandom.uniform(boardSize);
-        int c = StdRandom.uniform(boardSize);
-        int d = StdRandom.uniform(boardSize);
-
-        while (d == b) {
-            d = StdRandom.uniform(boardSize);
-        }
         // Swap tiles
-        twin[a][b] = board[c][d];
-        twin[c][d] = board[a][b];
+        if (board[0][0] == 0) {
+            twin[1][0] = board[0][1];
+            twin[0][1] = board[1][0];
+        }
+        else if (board[0][1] == 0) {
+            twin[0][0] = board[1][0];
+            twin[1][0] = board[0][0];
+        }
+        else {
+            twin[0][0] = board[0][1];
+            twin[0][1] = board[0][0];
+        }
 
         return new Board(twin);
     }
 
-    // This function is only intended to find two out-of-place values
-    private int[] outOfPlace() {
-        int goalVal = 1;
-        int insert = 0;
-        int[] outOfPlace = new int[4]; // [row,col,row,col]
+    private int[] findZero() {
+
         for (int i = 0; i < boardSize; i++) {
             for (int j = 0; j < boardSize; j++) {
-                if (board[i][j] != goalVal) {
-                    outOfPlace[insert] = i;
-                    outOfPlace[insert + 1] = j;
-                    insert = insert + 2;
+                if (board[i][j] == 0) {
+                    int[] rowCol = new int[2];
+                    rowCol[0] = i;
+                    rowCol[1] = j;
+                    return rowCol;
                 }
-                if (insert > 3) {
-                    return outOfPlace;
-                }
-                goalVal++;
             }
         }
-        return outOfPlace;
-    }
-
-    private boolean checkBoard(int row, int col, int val) {
-        if (row == this.boardSize - 1 && col == this.boardSize - 1) {
-            return true;
-        }
-        else if (this.board[row][col] != val) {
-            return false;
-        }
-        else {
-            if (col == this.boardSize - 1) {
-                return checkBoard(row + 1, 0, val + 1);
-            }
-            else {
-                return checkBoard(row, col + 1, val + 1);
-            }
-        }
-    }
-
-    private int[] findZero(int row, int col) {
-        if (board[row][col] == 0) {
-            int[] rowCol = new int[2];
-            rowCol[0] = row;
-            rowCol[1] = col;
-            return rowCol;
-        }
-        else {
-            if (col == this.boardSize - 1) {
-                return findZero(row + 1, 0);
-            }
-            else {
-                return findZero(row, col + 1);
-            }
-        }
-
+        return null;
     }
 
     // unit testing (not graded)
@@ -303,20 +265,20 @@ public class Board {
 
         Board testBoard = new Board(test);
         StdOut.println(testBoard.toString());
-        StdOut.println(testBoard.isGoal());
-        StdOut.println(testBoard.hamming());
-        StdOut.println(testBoard.manhattan());
+        StdOut.println("Is goal" + testBoard.isGoal());
+        StdOut.println("Hamming" + testBoard.hamming());
+        StdOut.println("Manhattan" + testBoard.manhattan());
         Board testBoardSame = new Board(test);
-        StdOut.println(testBoard.equals(testBoardSame));
+        StdOut.println("Equal test board" + testBoard.equals(testBoardSame));
 
         StdOut.println("--------------------");
 
         Board testBoard2 = new Board(test2);
         StdOut.println(testBoard2.toString());
         StdOut.println(testBoard2.isGoal());
-        StdOut.println(testBoard2.hamming());
-        StdOut.println(testBoard2.manhattan());
-        StdOut.println(testBoard2.equals(testBoard));
+        StdOut.println("Hamming" + testBoard2.hamming());
+        StdOut.println("Manhattan" + testBoard2.manhattan());
+        StdOut.println("Equal test board" + testBoard2.equals(testBoard));
 
         StdOut.println("--------------------");
 
@@ -326,7 +288,8 @@ public class Board {
         StdOut.println("Hamming" + randomTestBoard.hamming());
         StdOut.println("Manhattan" + randomTestBoard.manhattan());
         StdOut.println("Equal test board" + randomTestBoard.equals(testBoard));
-        randomTestBoard.neighbors().forEach((neighbour) -> StdOut.println(neighbour.toString()));
-        StdOut.println("Twin" + "\n" + randomTestBoard.twin().toString());
+        // randomTestBoard.neighbors().forEach(
+        //         (neighbour) -> StdOut.println("Neighbour: \n" + neighbour.toString()));
+        StdOut.println("Twin: " + "\n" + randomTestBoard.twin().toString());
     }
 }

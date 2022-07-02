@@ -15,100 +15,124 @@ import java.util.List;
 
 public class Solver {
     // find a solution to the initial board (using the A* algorithm)
-    private final Board initialBoard;
-    private final boolean solvalble;
-    Stack<Board> solution;
+    // private Board initialBoard;
+    private boolean solvable;
+    private Stack<Board> solution;
 
     public Solver(Board initial) {
 
-        initialBoard = initial;
         NodeComparator comparator = new NodeComparator();
         MinPQ<Node> q = new MinPQ<>(comparator);
+        MinPQ<Node> qTwin = new MinPQ<>(comparator);
 
         if (initial == null) {
             throw new IllegalArgumentException();
         }
-        if (!this.isSolvable()) {
-            solvalble = false;
-            return;
-        }
-        solvalble = true;
-
+        // initialBoard = initial;
         Node initialNode = new Node(initial, null, 0);
+        Node twin = new Node(initial.twin(), null, 0);
+
         q.insert(initialNode);
+        qTwin.insert(twin);
+
         List<Board> searched = new ArrayList<>();
-        solution = solve(q, searched);
+        List<Board> searchedTwin = new ArrayList<>();
+
+        solution = solve(q, searched, qTwin, searchedTwin);
+        if (solution.isEmpty()) {
+            solvable = false;
+        }
+        else {
+            solvable = true;
+        }
     }
 
-    private Stack<Board> solve(MinPQ<Node> q, List<Board> searched) {
+    private Stack<Board> solve(MinPQ<Node> q, List<Board> searched, MinPQ<Node> qTwin,
+                               List<Board> searchedTwin) {
 
-        Node node = q.delMin();
-        // Solution found
-        if (node.thisBoard.isGoal()) {
-            Stack<Board> sol = new Stack<>();
-            Board board = node.thisBoard;
-            while (node.prevNode != null) {
+        Stack<Board> sol = new Stack<>();
+        while (true) {
+            Node node = q.delMin();
+            Node twinNode = qTwin.delMin();
+
+            // Solution found
+            if (node.thisBoard.isGoal()) {
+                while (node.prevNode != null) {
+                    sol.push(node.thisBoard);
+                    node = node.prevNode;
+                }
                 sol.push(node.thisBoard);
-                node = node.prevNode;
+                break;
             }
-            sol.push(node.thisBoard);
-            return sol;
-        }
-
-        searched.add(node.thisBoard);
-
-        Iterable<Board> neighbours = node.thisBoard.neighbors();
-        Node parentNode = node;
-        neighbours.forEach(nb -> {
-            if (!searched.contains(nb)) {
-                Node nn = new Node(nb, parentNode, parentNode.moves + 1);
-                q.insert(nn);
+            // Solution found for twin -> unsolvable board
+            else if (twinNode.thisBoard.isGoal()) {
+                break;
             }
-        });
 
-        // Break is priority queue is empty and no solution was found
-        if (!searched.isEmpty() && q.isEmpty()) {
-            return new Stack<>();
+            // Push to searched
+            if (node.prevNode != null) {
+                searched.clear();
+                searched.add(node.prevNode.thisBoard);
+            }
+
+            if (twinNode.prevNode != null) {
+                searchedTwin.clear();
+                searchedTwin.add(twinNode.prevNode.thisBoard);
+            }
+
+            // Push to board solution queue
+            Iterable<Board> neighbours = node.thisBoard.neighbors();
+            Node parentNode = node;
+            neighbours.forEach(nb -> {
+                if (!searched.contains(nb)) {
+                    Node nn = new Node(nb, parentNode, parentNode.moves + 1);
+                    q.insert(nn);
+                }
+            });
+
+            // Push to twin board solution queue
+            Iterable<Board> twinNeighbours = twinNode.thisBoard.neighbors();
+            twinNeighbours.forEach(nb -> {
+                if (!searchedTwin.contains(nb)) {
+                    Node nn = new Node(nb, twinNode, twinNode.moves + 1);
+                    qTwin.insert(nn);
+                }
+            });
         }
-
-        return solve(q, searched);
+        return sol;
     }
 
     private class Node {
         final Board thisBoard;
-        final int Score;
+        final int score;
         final Node prevNode;
         final int moves;
 
         Node(Board thisBoard, Node prevNode, int moves) {
             this.thisBoard = thisBoard;
             this.prevNode = prevNode;
-            this.Score = this.thisBoard.manhattan() + moves;
+            this.score = this.thisBoard.manhattan() + moves;
             this.moves = moves;
         }
     }
 
     private class NodeComparator implements Comparator<Node> {
-        public int compare(Node A, Node B) {
-            return Integer.compare(A.Score, B.Score);
+        public int compare(Node a, Node b) {
+            return Integer.compare(a.score, b.score);
         }
     }
 
+
     // is the initial board solvable? (see below)
     public boolean isSolvable() {
-        // Returns false if the solution can be reached by swapping two tiles (not including 0)
-        StdOut.println(initialBoard.twin());
-        if (initialBoard.twin().isGoal()) {
-            return false;
-        }
-        return true;
+        return solvable;
     }
 
 
     // min number of moves to solve initial board; -1 if unsolvable
     public int moves() {
 
-        if (!solvalble) {
+        if (!solvable) {
             return -1;
         }
         return (solution.size() - 1); // Do not include first board
@@ -117,7 +141,7 @@ public class Solver {
     // sequence of boards in a shortest solution; null if unsolvable
     public Iterable<Board> solution() {
 
-        if (!solvalble) {
+        if (!solvable) {
             return null;
         }
 
@@ -148,6 +172,9 @@ public class Solver {
         StdOut.println(testBoard.toString());
         Solver solver = new Solver(testBoard);
         StdOut.println(solver.isSolvable());
+        if (solver.isSolvable()) {
+            solver.solution().forEach(s -> StdOut.println(s.toString()));
+        }
         StdOut.println("--------------------");
 
         int val = 0;
@@ -165,12 +192,35 @@ public class Solver {
         }
 
         Board randomTestBoard = new Board(randomTest);
-        StdOut.println("Start board" + randomTestBoard);
+        StdOut.println("Start board \n" + randomTestBoard.toString());
 
         Solver solution = new Solver(randomTestBoard);
         StdOut.println("Is solvable: " + solution.isSolvable());
-        StdOut.println("Min number of moves" + solution.moves());
-        solution.solution().forEach(s -> StdOut.println(s.toString()));
+        StdOut.println("Min number of moves: " + solution.moves());
+        if (solution.isSolvable()) {
+            solution.solution().forEach(s -> StdOut.println(s.toString()));
+        }
+
+        int[][] exceptionTest = new int[3][3];
+        exceptionTest[0][0] = 5;
+        exceptionTest[0][1] = 8;
+        exceptionTest[0][2] = 6;
+        exceptionTest[1][0] = 4;
+        exceptionTest[1][1] = 2;
+        exceptionTest[1][2] = 3;
+        exceptionTest[2][0] = 1;
+        exceptionTest[2][1] = 7;
+        exceptionTest[2][2] = 0;
+
+        Board exceptionBoard = new Board(exceptionTest);
+        StdOut.println("Start board \n" + exceptionBoard.toString());
+
+        Solver exception = new Solver(exceptionBoard);
+        StdOut.println("Is solvable: " + exception.isSolvable());
+        StdOut.println("Min number of moves: " + exception.moves());
+        if (exception.isSolvable()) {
+            exception.solution().forEach(s -> StdOut.println(s.toString()));
+        }
     }
 
 }
